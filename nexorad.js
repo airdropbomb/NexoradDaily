@@ -122,8 +122,6 @@ async function claimPoints(token) {
     console.log(`Attempting to claim points for token at ${new Date()} with proxy: ${proxy || 'None'}...`);
     try {
         const response = await axios.get(url, config);
-        // Log raw response for debugging (can be removed later)
-        console.log(chalk.gray(`Raw API Response for Token ${tokens.indexOf(token) + 1}:`, JSON.stringify(response.data, null, 2)));
 
         // Access nested data object
         const data = response.data?.data || {};
