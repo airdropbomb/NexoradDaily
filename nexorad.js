@@ -54,7 +54,7 @@ let proxyIndex = 0;
 // Proxy setting
 const useProxy = false; // Change to true to enable proxies
 const statsUrl = 'https://nexorad-backend.onrender.com/waitlist/user/stats/points';
-const claimUrl = 'https://nexorad-backend.onrender.com/waitlist/user/claim'; // Assumed claim endpoint
+const claimUrl = 'https://nexorad-backend.onrender.com/waitlist/claim/nxp';
 const COOLDOWN = 60 * 60 * 1000; // 1 hour in milliseconds
 
 // Store token timers
