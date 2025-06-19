@@ -13,6 +13,8 @@ const banner = `
       ██║  ██║██████╔╝██████╔     ██║ ╚████║╚██████╔╝██████╔╝███████╗
       ╚═╝  ╚═╝╚═════╝ ╚═════╝     ╚═╝  ╚═══╝ ╚═════╝ ╚═════╝ ╚══════╝  
 `;
+
+// Show banner only once at script start
 console.log(chalk.cyan(banner));
 
 // Load multiple tokens from tokens.txt, one per line, with error handling
@@ -22,6 +24,7 @@ try {
     tokens = tokensData.split('\n').filter(token => token.trim());
     if (tokens.length === 0) {
         console.error('No valid tokens found in tokens.txt');
+        process.exit(1);
     }
 } catch (error) {
     console.error('Error reading tokens.txt:', error.message);
@@ -193,7 +196,7 @@ function startTimer(token) {
 
 // Initialize timers for all tokens
 function initializeTimers() {
-    console.log(chalk.cyan(banner)); // Display banner at startup
+    // Removed duplicate banner display
     // Print empty lines to reserve space for timers
     tokens.forEach(() => console.log(''));
     tokens.forEach(token => {
