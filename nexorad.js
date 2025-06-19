@@ -2,7 +2,7 @@ const chalk = require('chalk'); // For coloring the banner and output
 const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
-const UserAgent = require('user-agents'); // Added for random User Agent
+const UserAgent = require('user-agents'); // For random User Agent
 
 // Colored ASCII banner
 const banner = `
@@ -34,7 +34,7 @@ let proxies = [];
 try {
     if (fs.existsSync('proxy.txt')) {
         const proxiesData = fs.readFileSync('proxy.txt', 'utf8').trim();
-        proxies = proxiesData.split('\n').filter(proxy => token.trim());
+        proxies = proxiesData.split('\n').filter(proxy => proxy.trim());
         if (proxies.length === 0) {
             console.log('proxy.txt is empty; proceeding without proxies.');
         }
@@ -122,18 +122,29 @@ async function claimPoints(token) {
     console.log(`Attempting to claim points for token at ${new Date()} with proxy: ${proxy || 'None'}...`);
     try {
         const response = await axios.get(url, config);
-        const { invitePoints, taskPoints, totalPoints, claimedPoints } = response.data;
-        
-        // Display only the requested fields with colors
-        console.log(chalk.blue(`Token ${tokens.indexOf(token) + 1} Points Claimed at ${new Date()}:`));
-        console.log(chalk.cyan(`  Invite Points: ${invitePoints}`));
-        console.log(chalk.yellow(`  Task Points: ${taskPoints}`));
-        console.log(chalk.green(`  Total Points: ${totalPoints}`));
-        console.log(chalk.magenta(`  Claimed Points: ${claimedPoints}`));
-        
+        console.log(chalk.gray(`Raw API Response for Token ${tokens.indexOf(token) + 1}:`, JSON.stringify(response.data, null, 2)));
+
+        // Check if response.data exists and has expected fields
+        const data = response.data || {};
+        const invitePoints = data.invitePoints ?? 'N/A';
+        const taskPoints = data.taskPoints ?? 'N/A';
+        const totalPoints = data.totalPoints ?? 'N/A';
+        const claimedPoints = data.claimedPoints ?? 'N/A';
+
+        // Display points if available
+        if (invitePoints !== 'N/A' || taskPoints !== 'N/A' || totalPoints !== 'N/A' || claimedPoints !== 'N/A') {
+            console.log(chalk.blue(`Token ${tokens.indexOf(token) + 1} Points Claimed at ${new Date()}:`));
+            if (invitePoints !== 'N/A') console.log(chalk.cyan(`  Invite Points: ${invitePoints}`));
+            if (taskPoints !== 'N/A') console.log(chalk.yellow(`  Task Points: ${taskPoints}`));
+            if (totalPoints !== 'N/A') console.log(chalk.green(`  Total Points: ${totalPoints}`));
+            if (claimedPoints !== 'N/A') console.log(chalk.magenta(`  Claimed Points: ${claimedPoints}`));
+        } else {
+            console.log(chalk.red(`No points data available for Token ${tokens.indexOf(token) + 1}`));
+        }
+
         // Set next claim to 1 hour from now
         const nextClaim = Date.now() + COOLDOWN;
-        
+
         // Update timer
         const existingTimer = tokenTimers.get(token);
         if (existingTimer && existingTimer.interval) {
@@ -141,10 +152,14 @@ async function claimPoints(token) {
         }
         tokenTimers.set(token, { nextClaim, interval: null });
         startTimer(token);
-        
+
         return response.data;
     } catch (error) {
-        console.error(`Error for token at ${new Date()}:`, error.response?.status || error.message);
+        console.error(chalk.red(`Error for Token ${tokens.indexOf(token) + 1} at ${new Date()}:`, error.response?.status || error.message));
+        if (error.response) {
+            console.log(chalk.gray(`Error Response Data:`, JSON.stringify(error.response.data, null, 2)));
+        }
+
         // On error, retry after a short delay (e.g., 1 minute)
         const nextClaim = Date.now() + 60 * 1000;
         const existingTimer = tokenTimers.get(token);
