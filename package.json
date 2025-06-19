@@ -1,0 +1,13 @@
+{
+  "name": "nexorad-daily",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "uuid": "^9.0.0",
+    "node-schedule": "^2.1.0"
+  }
+}
