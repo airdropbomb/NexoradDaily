@@ -14,7 +14,7 @@ A lightweight automation script for joining the [Nexorad](https://waitlist.nexor
    Add a `token.txt` file in the root directory with this content:
 
    ```
-   nano token.txt
+   nano tokens.txt
    ```
 
 3. **Add Proxies**
