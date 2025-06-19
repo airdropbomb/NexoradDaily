@@ -51,12 +51,12 @@ let proxyIndex = 0;
 const useProxy = false; // Change to true to enable proxies if available
 
 const url = 'https://nexorad-backend.onrender.com/waitlist/user/stats/points';
-const COOLDOWN = 60 * 60 * 1000; // 60 minutes in milliseconds (default if API doesn't provide)
+const COOLDOWN = 60 * 60 * 1000; // 1 hour in milliseconds
 
-// Store token timers and last claim times
+// Store token timers
 const tokenTimers = new Map(); // Map<token, { nextClaim: timestamp, interval: NodeJS.Timeout }>
 
-// Format time (e.g., "29m 24s")
+// Format time (e.g., "59m 45s")
 function formatTime(ms) {
     const seconds = Math.floor(ms / 1000);
     const minutes = Math.floor(seconds / 60);
@@ -67,11 +67,12 @@ function formatTime(ms) {
 // Update timer display for all tokens
 function updateTimerDisplay() {
     process.stdout.write('\x1B[?25l'); // Hide cursor
+    // Move cursor up to start of timer lines (based on number of tokens)
+    process.stdout.write(`\x1B[${tokens.length}A`);
     tokens.forEach((token, index) => {
         const timer = tokenTimers.get(token);
-        const line = timer && timer.nextClaim
-            ? `Token ${index + 1}: ${timeLeft > 0 ? formatTime(timeLeft) : 'Ready to claim!'}\r`
-            : `Token ${index + 1}: Initializing...\r`;
+        const timeLeft = timer && timer.nextClaim ? timer.nextClaim - Date.now() : 0;
+        const line = `Token ${index + 1}: ${timeLeft > 0 ? formatTime(timeLeft) : 'Ready to claim!'}\r\n`;
         process.stdout.write(line);
     });
     process.stdout.write('\x1B[?25h'); // Show cursor
@@ -121,10 +122,8 @@ async function claimPoints(token) {
         const response = await axios.get(url, config);
         console.log(`Points claimed for token at ${new Date()}:`, response.data);
         
-        // Assume API returns next claim time or use default cooldown
-        const nextClaim = response.data.nextClaim 
-            ? new Date(response.data.nextClaim).getTime()
-            : Date.now() + COOLDOWN;
+        // Set next claim to 1 hour from now
+        const nextClaim = Date.now() + COOLDOWN;
         
         // Update timer
         const existingTimer = tokenTimers.get(token);
@@ -172,8 +171,10 @@ function startTimer(token) {
 // Initialize timers for all tokens
 function initializeTimers() {
     console.log(chalk.cyan(banner)); // Display banner at startup
+    // Print empty lines to reserve space for timers
+    tokens.forEach(() => console.log(''));
     tokens.forEach(token => {
-        // Assume initial claim is ready or fetch from API
+        // Assume initial claim is ready
         tokenTimers.set(token, { nextClaim: Date.now(), interval: null });
         claimPoints(token); // Trigger initial claim
     });
