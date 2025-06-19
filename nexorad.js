@@ -1,7 +1,8 @@
-const chalk = require('chalk'); // For coloring the banner
+const chalk = require('chalk'); // For coloring the banner and output
 const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
+const UserAgent = require('user-agents'); // Added for random User Agent
 
 // Colored ASCII banner
 const banner = `
@@ -33,7 +34,7 @@ let proxies = [];
 try {
     if (fs.existsSync('proxy.txt')) {
         const proxiesData = fs.readFileSync('proxy.txt', 'utf8').trim();
-        proxies = proxiesData.split('\n').filter(proxy => proxy.trim());
+        proxies = proxiesData.split('\n').filter(proxy => token.trim());
         if (proxies.length === 0) {
             console.log('proxy.txt is empty; proceeding without proxies.');
         }
@@ -86,10 +87,11 @@ function getProxy() {
 }
 
 async function claimPoints(token) {
+    const userAgent = new UserAgent(); // Generate random User Agent
     const headers = {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        'User-Agent': userAgent.toString(), // Use random User Agent
         'X-Unique-ID': uuidv4()
     };
 
@@ -120,7 +122,14 @@ async function claimPoints(token) {
     console.log(`Attempting to claim points for token at ${new Date()} with proxy: ${proxy || 'None'}...`);
     try {
         const response = await axios.get(url, config);
-        console.log(`Points claimed for token at ${new Date()}:`, response.data);
+        const { invitePoints, taskPoints, totalPoints, claimedPoints } = response.data;
+        
+        // Display only the requested fields with colors
+        console.log(chalk.blue(`Token ${tokens.indexOf(token) + 1} Points Claimed at ${new Date()}:`));
+        console.log(chalk.cyan(`  Invite Points: ${invitePoints}`));
+        console.log(chalk.yellow(`  Task Points: ${taskPoints}`));
+        console.log(chalk.green(`  Total Points: ${totalPoints}`));
+        console.log(chalk.magenta(`  Claimed Points: ${claimedPoints}`));
         
         // Set next claim to 1 hour from now
         const nextClaim = Date.now() + COOLDOWN;
