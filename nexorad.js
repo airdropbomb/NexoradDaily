@@ -11,7 +11,7 @@ const banner = `
       ███████║██║  ██║██████╔╝    ██╔██╗ ██║██║   ██║██║  ██║█████╗  
       ██╔══██║██║  ██║██╔══██╗    ██║╚██╗██║██║   ██║██║  ██║██╔══╝  
       ██║  ██║██████╔╝██████╔     ██║ ╚████║╚██████╔╝██████╔╝███████╗
-      ╚═╝  ╚═╝╚═════╝ ╚═════╝     ╚═╝  ╚═══╝ ╚═════╝ ╚═════╝ ╚══════╝
+      ╚═╝  ╚═╝╚═════╝ ╚═════╝     ╚═╝  ╚═══╝ ╚═════╝ ╚═════╝ ╚══════╝  
 `;
 
 // Show banner only once at startup
@@ -53,7 +53,7 @@ let proxyIndex = 0;
 
 // Proxy setting
 const useProxy = false; // Change to true to enable proxies
-const url = 'https://nest.api.app/user/points';
+const url = 'https://nexorad-backend.onrender.com/waitlist/user/stats/points';
 const COOLDOWN = 60 * 60 * 1000; // 1 hour in milliseconds
 
 // Store token timers
@@ -69,16 +69,15 @@ function formatTime(ms) {
 
 // Update timer display
 function updateTimerDisplay() {
-  process.stdout.write('\x1b[?25l'); // Hide cursor
-  // Move cursor up based on number of tokens
-  process.stdout.write(`\x1b[${tokens.length}A`);
-  tokens.forEach(token, (index) => {
+  process.stdout.write('\x1B[?25l'); // Hide cursor
+  process.stdout.write(`\x1B[${tokens.length}A`); // Move cursor up
+  tokens.forEach((token, index) => {
     const timer = tokenTimers.get(token);
     const timeLeft = timer?.nextClaim ? timer.nextClaim - Date.now() : 0;
-    const line = `Token ${index + 1}: ${timeLeft > 0 ? formatTime(timeLeft) : 'Ready to claim!'}\n`;
+    const line = `Token ${index + 1}: ${timeLeft > 0 ? formatTime(timeLeft) : 'Ready to claim!'}\r\n`;
     process.stdout.write(line);
   });
-  process.stdout.write('\x1b[?25h'); // Show cursor
+  process.stdout.write('\x1B[?25h'); // Show cursor
 }
 
 function getProxy() {
@@ -114,14 +113,14 @@ async function claimPoints(token) {
         },
       };
     } catch (error) {
-      console.error(`Invalid proxy format: ${proxy}.`, Skipping proxy);
+      console.error(`Invalid proxy format: ${proxy}. Skipping proxy`);
       config = { headers };
     }
   } else {
     config = { headers };
   }
 
-  console.log(`Attempting to claim points for token at ${new Date()} with proxy:`, ${proxy || 'none'}...`);
+  console.log(`Attempting to claim points for token at ${new Date()} with proxy: ${proxy || 'none'}...`);
   try {
     const response = await axios.get(url, config);
 
@@ -145,11 +144,11 @@ async function claimPoints(token) {
 
     // Set next claim
     const nextClaim = Date.now() + COOLDOWN;
-    console.log(chalk.gray(`Next claim scheduled for ${new Date(nextClaim)}`)); // Debug log
+    console.log(chalk.gray(`[Debug] Next claim scheduled for ${new Date(nextClaim)}`));
 
     // Update timer
     const existingTimer = tokenTimers.get(token);
-    if (existingTimer && existingTimer.interval) {
+    if (existingTimer?.interval) {
       clearInterval(existingTimer.interval);
     }
     tokenTimers.set(token, { nextClaim, interval: null });
@@ -164,13 +163,13 @@ async function claimPoints(token) {
 
     // Retry after 5 minutes on error
     const nextClaim = Date.now() + 5 * 60 * 1000;
-    console.log(chalk.gray(`Retry scheduled for ${new Date(nextClaim)}`)); // Debug log
+    console.log(chalk.gray(`[Debug] Retry scheduled for ${new Date(nextClaim)}`));
 
     const existingTimer = tokenTimers.get(token);
-    if (existingTimer && existingTimer.interval) {
+    if (existingTimer?.interval) {
       clearInterval(existingTimer.interval);
     }
-    tokenTimers.set(token, { next: nextClaim, interval: null });
+    tokenTimers.set(token, { nextClaim, interval: null });
     startTimer(token);
   }
 }
@@ -181,7 +180,10 @@ function startTimer(token) {
 
   const checkClaim = () => {
     const timeLeft = timer.nextClaim - Date.now();
-    console.log(chalk.gray(`[Debug] Token ${tokens.indexOf(token) + 1}: Time left: ${formatTime(timeLeft)}`)); // Debug log
+    // Log time left every 10 seconds to avoid clutter
+    if (Math.floor(timeLeft / 1000) % 10 === 0) {
+      console.log(chalk.gray(`[Debug] Token ${tokens.indexOf(token) + 1}: Time left: ${formatTime(timeLeft)}`));
+    }
     if (timeLeft <= 0) {
       console.log(chalk.gray(`[Debug] Triggering claim for Token ${tokens.indexOf(token) + 1}`));
       claimPoints(token);
@@ -200,8 +202,7 @@ function startTimer(token) {
 
 // Initialize timers
 function initializeTimers() {
-  // Print empty lines for timers
-  tokens.forEach(() => console.log(''));
+  tokens.forEach(() => console.log('')); // Reserve space for timers
   tokens.forEach(token => {
     tokenTimers.set(token, { nextClaim: Date.now(), interval: null });
     claimPoints(token);
