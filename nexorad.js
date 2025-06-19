@@ -1,4 +1,4 @@
-const chalk = require('chalk'); // Added chalk for coloring
+const chalk = require('chalk'); // For coloring the banner
 
 // Colored ASCII banner
 console.log(chalk.cyan(`
@@ -13,7 +13,6 @@ console.log(chalk.cyan(`
 const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 const schedule = require('node-schedule');
-
 const fs = require('fs');
 
 // Load multiple tokens from tokens.txt, one per line, with error handling
@@ -30,12 +29,27 @@ try {
     process.exit(1); // Exit if tokens file is missing
 }
 
-// Load proxies from proxy.txt, one per line (e.g., http://user:pass@host:port)
-const proxies = fs.readFileSync('proxy.txt', 'utf8').trim().split('\n').filter(proxy => proxy.trim());
+// Load proxies from proxy.txt, one per line (e.g., http://user:pass@host:port), with optional handling
+let proxies = [];
+try {
+    if (fs.existsSync('proxy.txt')) {
+        const proxiesData = fs.readFileSync('proxy.txt', 'utf8').trim();
+        proxies = proxiesData.split('\n').filter(proxy => proxy.trim());
+        if (proxies.length === 0) {
+            console.log('proxy.txt is empty; proceeding without proxies.');
+        }
+    } else {
+        console.log('proxy.txt not found; proceeding without proxies.');
+    }
+} catch (error) {
+    console.error('Error reading proxy.txt:', error.message);
+    console.log('Proceeding without proxies.');
+}
+
 let proxyIndex = 0;
 
 // Option to use proxies (set to false to disable)
-const useProxy = false; // Change to true to enable proxies
+const useProxy = false; // Change to true to enable proxies if available
 
 const url = 'https://nexorad-backend.onrender.com/waitlist/user/stats/points';
 
@@ -55,7 +69,28 @@ function claimPoints(token) {
     };
 
     const proxy = getProxy();
-    const config = proxy ? { headers, proxy: { protocol: 'http', host: proxy.split('@')[1].split(':')[0], port: parseInt(proxy.split(':')[1]), auth: { username: proxy.split('@')[0].split(':')[0], password: proxy.split('@')[0].split(':')[1] } } } : { headers };
+    let config;
+    if (proxy) {
+        try {
+            const [auth, hostPort] = proxy.split('@');
+            const [username, password] = auth.split(':');
+            const [host, port] = hostPort.split(':');
+            config = {
+                headers,
+                proxy: {
+                    protocol: 'http',
+                    host,
+                    port: parseInt(port),
+                    auth: { username, password }
+                }
+            };
+        } catch (error) {
+            console.error(`Invalid proxy format: ${proxy}. Skipping proxy for this request.`);
+            config = { headers };
+        }
+    } else {
+        config = { headers };
+    }
 
     console.log(`Attempting to claim points for token at ${new Date()} with proxy: ${proxy || 'None'}...`);
     return axios.get(url, config)
