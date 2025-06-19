@@ -120,7 +120,7 @@ async function claimPoints(token) {
     config = { headers };
   }
 
-  console.log(`Attempting to claim points for token at ${new Date()} with proxy: ${proxy || 'none'}...`);
+  console.log(`Attempting to claim points for token at ${new Date().toLocaleString('en-US', { timeZone: 'Asia/Bangkok' })} with proxy: ${proxy || 'none'}...`);
   try {
     const response = await axios.get(url, config);
 
@@ -133,7 +133,7 @@ async function claimPoints(token) {
 
     // Display points
     if (invitePoints !== 'N/A' || taskPoints !== 'N/A' || totalPoints !== 'N/A' || claimedPoints !== 'N/A') {
-      console.log(chalk.blue(`Token ${tokens.indexOf(token) + 1} Points Claimed at ${new Date()}:`));
+      console.log(chalk.blue(`Token ${tokens.indexOf(token) + 1} Points Claimed at ${new Date().toLocaleString('en-US', { timeZone: 'Asia/Bangkok' })}:`));
       if (invitePoints !== 'N/A') console.log(chalk.cyan(`  Invite Points: ${invitePoints}`));
       if (taskPoints !== 'N/A') console.log(chalk.yellow(`  Task Points: ${taskPoints}`));
       if (totalPoints !== 'N/A') console.log(chalk.green(`  Total Points: ${totalPoints}`));
@@ -144,7 +144,7 @@ async function claimPoints(token) {
 
     // Set next claim
     const nextClaim = Date.now() + COOLDOWN;
-    console.log(chalk.gray(`[Debug] Next claim scheduled for ${new Date(nextClaim)}`));
+    console.log(chalk.gray(`[Debug] Next claim scheduled for ${new Date(nextClaim).toLocaleString('en-US', { timeZone: 'Asia/Bangkok' })}`));
 
     // Update timer
     const existingTimer = tokenTimers.get(token);
@@ -156,14 +156,14 @@ async function claimPoints(token) {
 
     return response.data;
   } catch (error) {
-    console.error(chalk.red(`Error for Token ${tokens.indexOf(token) + 1} at ${new Date()}:`, error.response?.status || error.message));
+    console.error(chalk.red(`Error for Token ${tokens.indexOf(token) + 1} at ${new Date().toLocaleString('en-US', { timeZone: 'Asia/Bangkok' })}:`, error.response?.status || error.message));
     if (error.response) {
       console.log(chalk.gray(`Error response data:`, JSON.stringify(error.response.data, null, 2)));
     }
 
     // Retry after 5 minutes on error
     const nextClaim = Date.now() + 5 * 60 * 1000;
-    console.log(chalk.gray(`[Debug] Retry scheduled for ${new Date(nextClaim)}`));
+    console.log(chalk.gray(`[Debug] Retry scheduled for ${new Date(nextClaim).toLocaleString('en-US', { timeZone: 'Asia/Bangkok' })}`));
 
     const existingTimer = tokenTimers.get(token);
     if (existingTimer?.interval) {
@@ -181,12 +181,12 @@ function startTimer(token) {
   const checkClaim = () => {
     const timeLeft = timer.nextClaim - Date.now();
     // Log time left every 10 seconds to avoid clutter
-    if (Math.floor(timeLeft / 1000) % 10 === 0) {
-      console.log(chalk.gray(`[Debug] Token ${tokens.indexOf(token) + 1}: Time left: ${formatTime(timeLeft)}`));
-    }
     if (timeLeft <= 0) {
-      console.log(chalk.gray(`[Debug] Triggering claim for Token ${tokens.indexOf(token) + 1}`));
-      claimPoints(token);
+      console.log(chalk.gray(`[Debug] Token ${tokens.indexOf(token) + 1}: Time left: ${formatTime(timeLeft)} - Triggering claim`));
+      clearInterval(timer.interval); // Stop current interval
+      claimPoints(token); // Trigger claim
+    } else if (Math.floor(timeLeft / 1000) % 10 === 0) {
+      console.log(chalk.gray(`[Debug] Token ${tokens.indexOf(token) + 1}: Time left: ${formatTime(timeLeft)}`));
     }
   };
 
@@ -216,4 +216,4 @@ initializeTimers();
 // Keep process alive
 setInterval(() => {}, 1000 * 60 * 60);
 
-console.log(`Started on ${process.platform} at ${new Date()} with ${tokens.length} tokens and proxy usage: ${useProxy}...`);
+console.log(`Started on ${process.platform} at ${new Date().toLocaleString('en-US', { timeZone: 'Asia/Bangkok' })} with ${tokens.length} tokens and proxy usage: ${useProxy}...`);
