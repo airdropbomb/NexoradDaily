@@ -1,14 +1,14 @@
 {
   "name": "nexorad-daily",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "nexorad.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node nexorad.js"
   },
   "dependencies": {
     "axios": "^1.6.0",
     "chalk": "^4.1.2",
-    "node-schedule": "^2.1.0",
-    "uuid": "^9.0.0"
+    "uuid": "^9.0.0",
+    "user-agents": "^1.1.0"
   }
 }
