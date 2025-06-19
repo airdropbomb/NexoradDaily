@@ -4,14 +4,15 @@ const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
 
 // Colored ASCII banner
-console.log(chalk.cyan(`
+const banner = `
        █████╗ ██████╗ ██████╗     ███╗   ██╗ ██████╗ ██████╗ ███████╗
       ██╔══██╗██╔══██╗██╔══██╗    ████╗  ██║██╔═══██╗██╔══██╗██╔════╝
       ███████║██║  ██║██████╔╝    ██╔██╗ ██║██║   ██║██║  ██║█████╗  
       ██╔══██║██║  ██║██╔══██╗    ██║╚██╗██║██║   ██║██║  ██║██╔══╝  
       ██║  ██║██████╔╝██████╔     ██║ ╚████║╚██████╔╝██████╔╝███████╗
       ╚═╝  ╚═╝╚═════╝ ╚═════╝     ╚═╝  ╚═══╝ ╚═════╝ ╚═════╝ ╚══════╝  
-`));
+`;
+console.log(chalk.cyan(banner));
 
 // Load multiple tokens from tokens.txt, one per line, with error handling
 let tokens = [];
@@ -50,12 +51,12 @@ let proxyIndex = 0;
 const useProxy = false; // Change to true to enable proxies if available
 
 const url = 'https://nexorad-backend.onrender.com/waitlist/user/stats/points';
-const COOLDOWN = 30 * 60 * 1000; // 30 minutes in milliseconds (default if API doesn't provide)
+const COOLDOWN = 60 * 60 * 1000; // 60 minutes in milliseconds (default if API doesn't provide)
 
 // Store token timers and last claim times
 const tokenTimers = new Map(); // Map<token, { nextClaim: timestamp, interval: NodeJS.Timeout }>
 
-// Format time (e.g., "29m 45s")
+// Format time (e.g., "29m 24s")
 function formatTime(ms) {
     const seconds = Math.floor(ms / 1000);
     const minutes = Math.floor(seconds / 60);
@@ -65,21 +66,15 @@ function formatTime(ms) {
 
 // Update timer display for all tokens
 function updateTimerDisplay() {
-    console.clear(); // Clear console for clean display
-    console.log(chalk.cyan('=== Nexorad Claim Timer ==='));
+    process.stdout.write('\x1B[?25l'); // Hide cursor
     tokens.forEach((token, index) => {
         const timer = tokenTimers.get(token);
-        if (timer && timer.nextClaim) {
-            const timeLeft = timer.nextClaim - Date.now();
-            if (timeLeft > 0) {
-                console.log(`Token ${index + 1}: ${formatTime(timeLeft)} left`);
-            } else {
-                console.log(`Token ${index + 1}: Ready to claim!`);
-            }
-        } else {
-            console.log(`Token ${index + 1}: Initializing...`);
-        }
+        const line = timer && timer.nextClaim
+            ? `Token ${index + 1}: ${timeLeft > 0 ? formatTime(timeLeft) : 'Ready to claim!'}\r`
+            : `Token ${index + 1}: Initializing...\r`;
+        process.stdout.write(line);
     });
+    process.stdout.write('\x1B[?25h'); // Show cursor
 }
 
 function getProxy() {
@@ -127,7 +122,6 @@ async function claimPoints(token) {
         console.log(`Points claimed for token at ${new Date()}:`, response.data);
         
         // Assume API returns next claim time or use default cooldown
-        // Example: response.data.nextClaim = "2025-06-19T16:32:00Z"
         const nextClaim = response.data.nextClaim 
             ? new Date(response.data.nextClaim).getTime()
             : Date.now() + COOLDOWN;
@@ -177,6 +171,7 @@ function startTimer(token) {
 
 // Initialize timers for all tokens
 function initializeTimers() {
+    console.log(chalk.cyan(banner)); // Display banner at startup
     tokens.forEach(token => {
         // Assume initial claim is ready or fetch from API
         tokenTimers.set(token, { nextClaim: Date.now(), interval: null });
