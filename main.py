@@ -85,7 +85,7 @@ async def get_remaining_time(token, proxy=None):
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.6831.83 Safari/537.36',
     }
     url = 'https://waitlist.nexorad.io/api/stats'
-    fallback_url = 'https://nexorad-backend.onrender.com/waitlist/user/stats/points'
+    fallback_url = 'https://nexorad-backend.onrender.com/waitlist/user/stats/points'  # Fallback URL
     proxy_url = f'http://{proxy}' if proxy else None
 
     async with aiohttp.ClientSession() as session:
@@ -102,10 +102,11 @@ async def get_remaining_time(token, proxy=None):
                     elif response.status == 400:
                         await log_message(f'[ERROR] Bad request for {extract_email(token)}: Status 400, Response: {await response.text()}')
                         print(color_text(f'[ERROR] {datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - Failed to get stats: Status 400, Response: {await response.text()}', 'red'))
+                        # Try fallback URL
                         async with session.get(fallback_url, headers=headers, proxy=proxy_url, timeout=10) as fallback_response:
                             if fallback_response.status == 200:
                                 data = await fallback_response.json()
-                                remaining_time = data.get('lastClaim') and '1:00:00' or '0:00:00'
+                                remaining_time = data.get('lastClaim') and '1:00:00' or '0:00:00'  # Adjust based on actual response
                                 current_points = data.get('totalPoints', 0)
                                 await log_message(f'[INFO] Fallback success for {extract_email(token)}: {remaining_time}, Points: {current_points}')
                                 print(f'[INFO] {datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - Fallback cooldown time: {remaining_time}, Points: {current_points} NXP')
@@ -222,18 +223,12 @@ async def claim_for_all_tokens():
     print(color_text(f'[COMPLETE] {timestamp} - Finished processing all tokens.', 'blue'))
 
 async def schedule_claims():
-    # Initial claim on startup
-    await claim_for_all_tokens()
-    
     while True:
-        now = datetime.now()
-        wait_time = random.uniform(3600, 4200)  # Random time between 1 hour and 1 hour 10 minutes
-        next_run = now + timedelta(seconds=wait_time)
-        timestamp = now.strftime('%Y-%m-%d %H:%M:%S')
-        await log_message(f'[SCHEDULE] Waiting {wait_time:.2f} seconds until next run (approx. {next_run.strftime("%H:%M")})')
-        print(color_text(f'[SCHEDULE] {timestamp} - Waiting {wait_time:.2f} seconds until next run (approx. {next_run.strftime("%H:%M")})...', 'yellow'))
-        await asyncio.sleep(wait_time)
         await claim_for_all_tokens()
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        await log_message(f'[SCHEDULE] Waiting 1 hour for next claim cycle')
+        print(color_text(f'[SCHEDULE] {timestamp} - Waiting 1 hour 3 minutes for next claim cycle...', 'yellow'))
+        await asyncio.sleep(3780)
 
 async def main():
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
