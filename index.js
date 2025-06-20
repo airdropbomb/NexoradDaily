@@ -1,31 +1,31 @@
 const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
-const colors = require('chalk'); // Map colors to chalk for banner
+const chalk = require('chalk'); // Explicitly require chalk
 
 // Initialize chalk with fallback to plain text
-let chalk = (text) => text;
+let chalkFallback = (text) => text;
 try {
-    chalk = require('chalk');
+    chalkFallback = chalk;
     console.log(chalk.green('chalk module loaded successfully'));
 } catch (e) {
     console.warn('[WARNING] chalk not found, using plain text. Install with: npm install chalk');
 }
 
-// Banner function
+// Banner function with corrected chalk usage
 const banner = () => {
-    console.log(`${chalk.cyan}${chalk.bold}`);
-    console.log(`
+    const bannerText = `
  █████╗ ██████╗ ██████╗     ███╗   ██╗ ██████╗ ██████╗ ███████╗
 ██╔══██╗██╔══██╗██╔══██╗    ████╗  ██║██╔═══██╗██╔══██╗██╔════╝
 ███████║██║  ██║██████╔╝    ██╔██╗ ██║██║   ██║██║  ██║█████╗
 ██╔══██║██║  ██║██╔══██╗    ██║╚██╗██║██║   ██║██║  ██║██╔══╝
 ██║  ██║██████╔╝██████╔╝    ██║ ╚████║╚██████╔╝██████╔╝███████╗
 ╚═╝  ╚═╝╚═════╝ ╚═════╚═╝     ╚═╝  ╚═══╝ ╚═════╝ ╚═════╝ ╚══════╝
-    `);
-    console.log(`---------------------------------------------`);
-    console.log(`         Nexorad Daily Bot - ADB NODE          `);
-    console.log(`---------------------------------------------${chalk.reset}`);
+---------------------------------------------
+         Nexorad Daily Bot - ADB NODE
+---------------------------------------------
+    `;
+    console.log(chalkFallback.cyan.bold(bannerText));
     console.log();
 };
 
@@ -35,13 +35,13 @@ try {
     const tokensData = fs.readFileSync('tokens.txt', 'utf8').trim();
     tokens = tokensData.split('\n').filter(token => token.trim());
     if (tokens.length === 0) {
-        console.log(chalk.red('[ERROR] ✗ No valid tokens found in tokens.txt'));
-        console.log(chalk.yellow('[WARNING] Please create tokens.txt with one token per line and retry.'));
+        console.log(chalkFallback.red('[ERROR] ✗ No valid tokens found in tokens.txt'));
+        console.log(chalkFallback.yellow('[WARNING] Please create tokens.txt with one token per line and retry.'));
         process.exit(1);
     }
 } catch (error) {
-    console.log(chalk.red(`[ERROR] ✗ Error reading tokens.txt: ${error.message}`));
-    console.log(chalk.yellow('[WARNING] Please create tokens.txt with one token per line and retry.'));
+    console.log(chalkFallback.red(`[ERROR] ✗ Error reading tokens.txt: ${error.message}`));
+    console.log(chalkFallback.yellow('[WARNING] Please create tokens.txt with one token per line and retry.'));
     process.exit(1);
 }
 
@@ -51,7 +51,7 @@ try {
     const proxyData = fs.readFileSync('proxy.txt', 'utf8').trim();
     proxies = proxyData.split('\n').filter(proxy => proxy.trim());
 } catch (error) {
-    console.log(chalk.yellow(`[WARNING] Error reading proxy.txt: ${error.message}. Continuing without proxies.`));
+    console.log(chalkFallback.yellow(`[WARNING] Error reading proxy.txt: ${error.message}. Continuing without proxies.`));
 }
 let proxyIndex = 0;
 
@@ -121,7 +121,7 @@ async function claimPoints(token) {
         const { data } = response;
         const elapsedTime = ((Date.now() - startTime) / 1000).toFixed(2);
 
-        console.log(chalk.green(`[SUCCESS] ${timestamp} - Claim processed for ${email} in ${elapsedTime}s:`));
+        console.log(chalkFallback.green(`[SUCCESS] ${timestamp} - Claim processed for ${email} in ${elapsedTime}s:`));
         console.log(`  - Message: ${data.message || 'Claim successful'}`);
         console.log(`  - Points Claimed: ${data.pointsClaimed || 'N/A'}`);
         console.log(`  - Total Points: ${data.totalPoints || 'N/A'}`);
@@ -130,13 +130,13 @@ async function claimPoints(token) {
         const errorMsg = error.response?.status
             ? `Status: ${error.response.status} - ${error.response.data?.message || error.message}`
             : error.message;
-        console.log(chalk.red(`[ERROR] ${timestamp} - Failed to claim for ${email} in ${elapsedTime}s: ${errorMsg}`));
+        console.log(chalkFallback.red(`[ERROR] ${timestamp} - Failed to claim for ${email} in ${elapsedTime}s: ${errorMsg}`));
     }
 }
 
 async function claimForAllTokens() {
     const timestamp = new Date().toLocaleString('en-US');
-    console.log(chalk.blue(`[PROCESS] ${timestamp} - Starting claims for ${tokens.length} tokens...`));
+    console.log(chalkFallback.blue(`[PROCESS] ${timestamp} - Starting claims for ${tokens.length} tokens...`));
 
     for (let i = 0; i < tokens.length; i++) {
         const email = extractEmailFromToken(tokens[i]);
@@ -147,8 +147,8 @@ async function claimForAllTokens() {
             await new Promise(resolve => setTimeout(resolve, 5000));
         }
     }
-    console.log(chalk.blue(`[COMPLETE] ${timestamp} - Finished processing all tokens.`));
-    console.log(chalk.yellow(`[SCHEDULE] ${timestamp} - Waiting 3 hours 2 minutes for next claim cycle...`));
+    console.log(chalkFallback.blue(`[COMPLETE] ${timestamp} - Finished processing all tokens.`));
+    console.log(chalkFallback.yellow(`[SCHEDULE] ${timestamp} - Waiting 3 hours 2 minutes for next claim cycle...`));
 }
 
 // Display banner at start
@@ -159,7 +159,7 @@ setInterval(claimForAllTokens, 10920000); // 3 hours (10,800,000 ms) + 2 minutes
 
 // Manual trigger for immediate test
 const startTime = new Date().toLocaleString('en-US');
-console.log(chalk.blue(`[START] ${startTime} - Script started on ${process.platform} with ${tokens.length} tokens and proxy usage: ${useProxy}...`));
+console.log(chalkFallback.blue(`[START] ${startTime} - Script started on ${process.platform} with ${tokens.length} tokens and proxy usage: ${useProxy}...`));
 claimForAllTokens();
 
 // Keep process alive
