@@ -29,11 +29,11 @@ A lightweight automation script for joining the [Nexorad](https://waitlist.nexor
 4. **Install Dependencies**
 
    ```
-   pip install -r requirements.txt
+   npm install
    ```
 
 ## ▶️ Run the Script
 
 ```bash
-python main.py
+node index.js
 ```
