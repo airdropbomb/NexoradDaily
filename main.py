@@ -227,8 +227,8 @@ async def schedule_claims():
         await claim_for_all_tokens()
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         await log_message(f'[SCHEDULE] Waiting 1 hour for next claim cycle')
-        print(color_text(f'[SCHEDULE] {timestamp} - Waiting 1 hour 3 minutes for next claim cycle...', 'yellow'))
-        await asyncio.sleep(3780)
+        print(color_text(f'[SCHEDULE] {timestamp} - Waiting 3 hour 2 minutes for next claim cycle...', 'yellow'))
+        await asyncio.sleep(10920)
 
 async def main():
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
